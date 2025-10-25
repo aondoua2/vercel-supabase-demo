@@ -1,45 +1,52 @@
-'use client'
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { supabase } from '@/lib/supabase'
 
-// Define the expected shape of your data
-type Metric = {
-  id: number
-  name: string
-  age: number
-}
+export default async function Home() {
+  const { data: metrics, error } = await supabase
+    .from('METRICS')
+    .select('*')
+    .order('created_at', { ascending: false })
 
-export default function Home() {
-  // Typed state for metrics data
-  const [rows, setRows] = useState<Metric[]>([])
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data, error } = await supabase
-        .from<Metric>('METRICS')
-        .select('*')
-
-      if (error) console.error('Supabase error:', error)
-      else if (data) setRows(data)
-    }
-
-    fetchData()
-  }, [])
+  if (error) {
+    console.error('Error fetching metrics:', error)
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Supabase METRICS Table</h1>
+        <p className="text-red-600">Error: {error.message}</p>
+      </div>
+    )
+  }
 
   return (
-    <main className="p-10">
+    <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Supabase METRICS Table</h1>
-      {rows.length === 0 ? (
-        <p>No data found.</p>
+      {metrics && metrics.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-300">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border border-gray-300 px-4 py-2">ID</th>
+                <th className="border border-gray-300 px-4 py-2">Name</th>
+                <th className="border border-gray-300 px-4 py-2">Age</th>
+                <th className="border border-gray-300 px-4 py-2">Created At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {metrics.map((metric) => (
+                <tr key={metric.id}>
+                  <td className="border border-gray-300 px-4 py-2">{metric.id}</td>
+                  <td className="border border-gray-300 px-4 py-2">{metric.name}</td>
+                  <td className="border border-gray-300 px-4 py-2">{metric.age}</td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {new Date(metric.created_at).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <ul className="space-y-2">
-          {rows.map((r) => (
-            <li key={r.id} className="border p-2 rounded">
-              {r.name} — {r.age}
-            </li>
-          ))}
-        </ul>
+        <p>No data found.</p>
       )}
-    </main>
+    </div>
   )
 }
