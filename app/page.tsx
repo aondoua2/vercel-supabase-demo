@@ -1,16 +1,28 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'  // ✅ uses .. because lib is at the root level
+import { supabase } from '../lib/supabaseClient'
+
+// Define the expected shape of your data
+type Metric = {
+  id: number
+  name: string
+  age: number
+}
 
 export default function Home() {
-  const [rows, setRows] = useState([])
+  // Typed state for metrics data
+  const [rows, setRows] = useState<Metric[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data, error } = await supabase.from('METRICS').select('*')
+      const { data, error } = await supabase
+        .from<Metric>('METRICS')
+        .select('*')
+
       if (error) console.error('Supabase error:', error)
-      else setRows(data)
+      else if (data) setRows(data)
     }
+
     fetchData()
   }, [])
 
